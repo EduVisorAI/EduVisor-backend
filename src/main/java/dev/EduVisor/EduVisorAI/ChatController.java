@@ -6,6 +6,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -32,10 +33,14 @@ public class ChatController {
     }
 
 
-    // private static final String SYSTEM_MESSAGE = "Eres una IA de quimica para estudiantes universitarios que responderá solo preguntas de " +
-    //     "quimica\n" + " [Importante] En caso se mencione un elemento quimico, debes colocar su CID al principio de la respuesta, " +
-    //     "ejemplo CID=702, luego la respuesta, El CID debe estar SOLO al PRINCIPIO de la respuesta, si no se encuentra el CID no " +
-    //     "lo menciones." + "En caso te pidan aguna imagen o gráfico debes dar el CID del componente quimico y luego la respuesta.";
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        Map<String, String> health = new HashMap<>();
+        health.put("status", "UP");
+        return health;
+    }
+
+
     private static final String SYSTEM_MESSAGE = 
         "Eres una IA de química para estudiantes universitarios. " +
         "[IMPORTANTE] Solo puedes responder preguntas de química. " +
@@ -62,6 +67,8 @@ public class ChatController {
 
         String response;
         String cid;
+        int maxattempts = 3;
+        int attempts = 0;
         do {
             try {
                 response = chatClient.call(prompt).getResult().getOutput().getContent();
@@ -69,16 +76,17 @@ public class ChatController {
             } catch (Exception e) {
                 throw new RuntimeException("Failed to call chat client", e);
             }
-
+    
             cid = extractCID(response);
-
+    
             response = removeCID(response);
-
-            // Store the system response in the conversation history
+    
             var systemResponse = new SystemMessage(response);
             conversation.add(systemResponse);
             conversationHistory.put(userId, conversation);
-        } while (cid.isEmpty());
+    
+            attempts++;
+        } while (cid.isEmpty() && attempts < maxattempts);
 
         return new ChemicalResponse(cid, response);
     }
