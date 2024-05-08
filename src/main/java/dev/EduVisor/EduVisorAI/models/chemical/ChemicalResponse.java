@@ -1,4 +1,4 @@
-package dev.EduVisor.EduVisorAI.models;
+package dev.EduVisor.EduVisorAI.models.chemical;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
