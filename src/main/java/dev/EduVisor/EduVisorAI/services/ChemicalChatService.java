@@ -28,8 +28,7 @@ public class ChemicalChatService {
         "Por ejemplo, 'CID=702, El agua es una molécula compuesta por dos átomos de hidrógeno y uno de oxígeno.'";
 
     private static final String SYSTEM_RECORDATORY_MESSAGE = "No olvides responder en el siguiente formato: 'CID={numero} {respuesta}'.";
-    private static final Pattern CID_PATTERN = Pattern.compile("CID=(\\d+), ");
-
+    private static final Pattern CID_PATTERN = Pattern.compile("CID=(\\d+)[, ]");
     private final Map<String, List<Message>> conversationHistory;
     private final ChatClient chatClient;
 
@@ -93,7 +92,7 @@ public class ChemicalChatService {
     }
 
     private String removeCID(String response) {
-        // Remove "CID={number}, " from the beginning of the response
-        return response.replaceFirst("CID=\\d+, ", "");
+        // Remove "CID={number}, " or "CID={number} " from the beginning of the response
+        return response.replaceFirst(CID_PATTERN.pattern(), "");
     }
 }
