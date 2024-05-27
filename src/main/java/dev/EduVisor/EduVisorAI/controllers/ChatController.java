@@ -6,7 +6,6 @@ import dev.EduVisor.EduVisorAI.models.chemical.ChemicalRequest;
 import dev.EduVisor.EduVisorAI.models.chemical.ChemicalResponse;
 import dev.EduVisor.EduVisorAI.services.ChemicalChatService;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +28,8 @@ public class ChatController {
     }
 
     @PostMapping("/api/chemical")
-    public ChemicalResponse chemicalChat(@RequestBody ChemicalRequest request, @RequestHeader("userId") String userId) {
+    public ChemicalResponse chemicalChat(@RequestBody ChemicalRequest request, @RequestHeader("userId") String userId,
+            @RequestHeader("chatId") String chatId) {
         return chatService.processChemicalChat(request, userId);
     }
 }
