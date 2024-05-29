@@ -28,8 +28,7 @@ public class ChatController {
     }
 
     @PostMapping("/api/chemical")
-    public ChemicalResponse chemicalChat(@RequestBody ChemicalRequest request, @RequestHeader("userId") String userId,
-            @RequestHeader("chatId") String chatId) {
-        return chatService.processChemicalChat(request, userId);
+    public ChemicalResponse chemicalChat(@RequestBody ChemicalRequest request) {
+        return chatService.processChemicalChat(request, request.getUserId(), request.getChatId());
     }
 }

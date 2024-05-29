@@ -11,4 +11,6 @@ import lombok.Setter;
 @Setter
 public class ChemicalRequest {
     private String message;
+    private String userId;
+    private String chatId;
 }

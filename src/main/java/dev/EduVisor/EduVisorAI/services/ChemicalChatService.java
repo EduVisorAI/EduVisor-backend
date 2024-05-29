@@ -8,6 +8,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import dev.EduVisor.EduVisorAI.models.chemical.ChemicalRequest;
 import dev.EduVisor.EduVisorAI.models.chemical.ChemicalResponse;
@@ -19,8 +20,21 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.cloud.translate.Translate;
+import com.google.cloud.translate.TranslateOptions;
+import com.google.cloud.translate.Translation;
+
 @Service
 public class ChemicalChatService {
+
+    @Value("${GOOGLE_TRANSLATE_API_KEY}")
+    private String apiKey;
+
+    private String translateToSpanish(String text) {
+        Translate translate = TranslateOptions.newBuilder().setApiKey(apiKey).build().getService();
+        Translation translation = translate.translate(text, Translate.TranslateOption.targetLanguage("es"));
+        return translation.getTranslatedText();
+    }
 
     private static final String SYSTEM_MESSAGE = "Eres una IA de química diseñada específicamente para estudiantes universitarios. "
             +
@@ -32,7 +46,7 @@ public class ChemicalChatService {
             "- Respuesta: `Component=Water Answer=El agua es una molécula compuesta por dos átomos de hidrógeno y uno de oxígeno.`";
 
     private static final Pattern COMPONENT_PATTERN = Pattern.compile("Component=([^ ]+)");
-    private static final Pattern ANSWER_PATTERN = Pattern.compile("Answer=(.+)");
+    private static final Pattern ANSWER_PATTERN = Pattern.compile("Answer=(.+)\\z", Pattern.DOTALL);
 
     private final Map<String, List<Message>> conversationHistory;
     private final ChatClient chatClient;
@@ -45,12 +59,15 @@ public class ChemicalChatService {
         this.restTemplate = restTemplate;
     }
 
-    public ChemicalResponse processChemicalChat(ChemicalRequest request, String userId) {
+    public ChemicalResponse processChemicalChat(ChemicalRequest request, String userId, String chatId) {
         String userChemicalRequest = request.getMessage();
         var user = new UserMessage(userChemicalRequest);
 
-        // Retrieve conversation history for this user
-        List<Message> conversation = conversationHistory.getOrDefault(userId, new ArrayList<>());
+        // Use a combination of userId and chatId as the key
+        String userChatKey = userId + "-" + chatId;
+
+        // Retrieve conversation history for this user and chat
+        List<Message> conversation = conversationHistory.getOrDefault(userChatKey, new ArrayList<>());
         conversation.add(user);
 
         var system = new SystemMessage(SYSTEM_MESSAGE);
@@ -68,6 +85,7 @@ public class ChemicalChatService {
         }
 
         component = extractComponent(response);
+        String componentSpanish = translateToSpanish(component);
         answer = extractAnswer(response);
         String cid = getCidFromPubChem(component);
 
@@ -76,9 +94,10 @@ public class ChemicalChatService {
         var systemResponse = new SystemMessage(response);
         conversation.add(systemResponse);
 
-        conversationHistory.put(userId, conversation);
+        // Store the conversation history using the userChatKey
+        conversationHistory.put(userChatKey, conversation);
 
-        return new ChemicalResponse(component, answer, cid);
+        return new ChemicalResponse(componentSpanish, answer, cid);
     }
 
     private String extractComponent(String response) {
