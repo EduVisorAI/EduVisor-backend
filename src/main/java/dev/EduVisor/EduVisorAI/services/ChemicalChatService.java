@@ -6,6 +6,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import dev.EduVisor.EduVisorAI.models.chemical.ChemicalRequest;
@@ -100,8 +101,13 @@ public class ChemicalChatService {
 
     private String getCidFromPubChem(String component) {
         String url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/" + component + "/cids/JSON";
-        String result = restTemplate.getForObject(url, String.class);
-        String cid = extractCid(result);
+        String cid = "";
+        try {
+            String result = restTemplate.getForObject(url, String.class);
+            cid = extractCid(result);
+        } catch (HttpClientErrorException.NotFound e) {
+            // Log the error or handle it as you see fit
+        }
         return cid;
     }
 
