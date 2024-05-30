@@ -8,7 +8,6 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.beans.factory.annotation.Value;
 
 import dev.EduVisor.EduVisorAI.models.chemical.ChemicalRequest;
 import dev.EduVisor.EduVisorAI.models.chemical.ChemicalResponse;
@@ -27,11 +26,8 @@ import com.google.cloud.translate.Translation;
 @Service
 public class ChemicalChatService {
 
-    @Value("${GOOGLE_TRANSLATE_API_KEY}")
-    private String apiKey;
-
     private String translateToSpanish(String text) {
-        Translate translate = TranslateOptions.newBuilder().setApiKey(apiKey).build().getService();
+        Translate translate = TranslateOptions.getDefaultInstance().getService();
         Translation translation = translate.translate(text, Translate.TranslateOption.targetLanguage("es"));
         return translation.getTranslatedText();
     }
@@ -43,10 +39,24 @@ public class ChemicalChatService {
             +
             "Ejemplo de respuesta: " +
             "- Pregunta: \"¿Qué es el agua?\" " +
-            "- Respuesta: `Component=Water Answer=El agua es una molécula compuesta por dos átomos de hidrógeno y uno de oxígeno.`";
-
-    private static final Pattern COMPONENT_PATTERN = Pattern.compile("Component=([^ ]+)");
-    private static final Pattern ANSWER_PATTERN = Pattern.compile("Answer=(.+)\\z", Pattern.DOTALL);
+            "- Respuesta: `Component={Water} Answer={El agua es una molécula compuesta por dos átomos de hidrógeno y uno de oxígeno.}`\n"
+            +
+            "Ejemplo de respuesta2: " +
+            "- Pregunta: \"dame una lista de quimicos que se combinan con el hidrogeno\" " +
+            "- Respuesta: `Component={Hidrogen} Answer={Claro, aquí tienes una lista de algunos químicos que se combinan con el hidrógeno para formar diferentes compuestos:\n\n"
+            +
+            "Oxígeno (O₂): Forma agua (H₂O).\n" +
+            "Cloro (Cl₂): Forma ácido clorhídrico (HCl).\n" +
+            "Azufre (S): Forma ácido sulfhídrico (H₂S).\n" +
+            "Nitrógeno (N₂): Forma amoníaco (NH₃).\n" +
+            "Carbono (C): Forma metano (CH₄).\n" +
+            "Flúor (F₂): Forma ácido fluorhídrico (HF).\n" +
+            "Bromo (Br₂): Forma ácido bromhídrico (HBr).\n" +
+            "Yodo (I₂): Forma ácido yodhídrico (HI).\n" +
+            "Fósforo (P): Forma fosfina (PH₃).\n" +
+            "Silicio (Si): Forma silano (SiH₄).}`";
+    private static final Pattern COMPONENT_PATTERN = Pattern.compile("Component=\\{(.*?)\\}");
+    private static final Pattern ANSWER_PATTERN = Pattern.compile("Answer=\\{(.*?)\\}", Pattern.DOTALL);
 
     private final Map<String, List<Message>> conversationHistory;
     private final ChatClient chatClient;
