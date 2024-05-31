@@ -54,7 +54,11 @@ public class ChemicalChatService {
             "Bromo (Br₂): Forma ácido bromhídrico (HBr).\n" +
             "Yodo (I₂): Forma ácido yodhídrico (HI).\n" +
             "Fósforo (P): Forma fosfina (PH₃).\n" +
-            "Silicio (Si): Forma silano (SiH₄).}`";
+            "Silicio (Si): Forma silano (SiH₄).}`"
+            +
+            "Ejemplo de respuesta3: " +
+            "- Pregunta: \"Quien es el presidente de Perú\" " +
+            "- Respuesta: `Component={Perú} Answer={Lo siento, solo puedo responder preguntas relacionadas a química.}`";
     private static final Pattern COMPONENT_PATTERN = Pattern.compile("Component=\\{(.*?)\\}");
     private static final Pattern ANSWER_PATTERN = Pattern.compile("Answer=\\{(.*?)\\}", Pattern.DOTALL);
 
@@ -95,9 +99,12 @@ public class ChemicalChatService {
         }
 
         component = extractComponent(response);
-        String componentSpanish = translateToSpanish(component);
         answer = extractAnswer(response);
         String cid = getCidFromPubChem(component);
+
+        if (!cid.isEmpty()) {
+            component = translateToSpanish(component);
+        }
 
         response = removeComponentAndAnswer(response);
 
@@ -107,7 +114,7 @@ public class ChemicalChatService {
         // Store the conversation history using the userChatKey
         conversationHistory.put(userChatKey, conversation);
 
-        return new ChemicalResponse(componentSpanish, answer, cid);
+        return new ChemicalResponse(component, answer, cid);
     }
 
     private String extractComponent(String response) {
