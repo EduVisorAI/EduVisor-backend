@@ -6,5 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ArtResponse {
-    private String Answer;
+    private String answer;
+    private String imageUrl;
 }
