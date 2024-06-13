@@ -1,4 +1,4 @@
-package dev.EduVisor.EduVisorAI.models.chemical;
+package dev.EduVisor.EduVisorAI.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ChemicalRequest {
+public class ChatRequest {
     private String message;
     private String userId;
     private String chatId;

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import dev.EduVisor.EduVisorAI.models.chemical.ChemicalRequest;
+import dev.EduVisor.EduVisorAI.models.ChatRequest;
 import dev.EduVisor.EduVisorAI.models.chemical.ChemicalResponse;
 
 import java.util.ArrayList;
@@ -73,7 +73,7 @@ public class ChemicalChatService {
         this.restTemplate = restTemplate;
     }
 
-    public ChemicalResponse processChemicalChat(ChemicalRequest request, String userId, String chatId) {
+    public ChemicalResponse processChemicalChat(ChatRequest request, String userId, String chatId) {
         String userChemicalRequest = request.getMessage();
         var user = new UserMessage(userChemicalRequest);
 
