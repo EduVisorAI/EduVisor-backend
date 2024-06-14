@@ -26,6 +26,8 @@ jobs:
           echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
 
       - name: Build with Maven
+        env:
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
         run: mvn clean install
 
       - name: Upload artifact for deployment job
