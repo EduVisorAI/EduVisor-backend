@@ -20,7 +20,10 @@ jobs:
           java-version: '21'
 
       - name: Create .env file
-        run: echo SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY }} > .env
+        run: |
+          echo SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY }} > .env
+          echo GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} >> .env
+          echo OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} >> .env
 
       - name: Build with Maven
         run: mvn clean install
