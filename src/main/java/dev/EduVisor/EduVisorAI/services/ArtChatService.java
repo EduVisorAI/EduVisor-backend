@@ -8,6 +8,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
+import dev.EduVisor.EduVisorAI.config.ArtChatProperties;
+import lombok.AllArgsConstructor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.ai.chat.ChatClient;
@@ -15,6 +17,9 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import dev.EduVisor.EduVisorAI.models.ChatRequest;
@@ -28,6 +33,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ConfigurationProperties
+@AllArgsConstructor
 @Service
 public class ArtChatService {
 
@@ -41,16 +48,12 @@ public class ArtChatService {
             "- Respuesta: `Answer={La Mona Lisa fue pintada por Leonardo da Vinci, un artista renacentista italiano, entre los años 1503 y 1506. Es una de las obras de arte más famosas y reconocibles en el mundo, conocida por la enigmática expresión de la mujer retratada y por su compleja técnica de sombreado llamada sfumato. La pintura se encuentra actualmente en el Museo del Louvre en París, Francia.}`\n";
 
     private static final Pattern ANSWER_PATTERN = Pattern.compile("Answer=\\{(.*?)\\}", Pattern.DOTALL);
-    private static final Dotenv dotenv = Dotenv.load();
-    private static final String SERPAPI_API_KEY = dotenv.get("SERPAPI_API_KEY");
+    private final ArtChatProperties artChatProperties;
 
-    private final Map<String, List<Message>> conversationHistory;
+    private final Map<String, List<Message>> conversationHistory = new HashMap<>();
+    @Autowired
     private final ChatClient chatClient;
 
-    public ArtChatService(ChatClient chatClient) {
-        this.chatClient = chatClient;
-        this.conversationHistory = new HashMap<>();
-    }
 
     public ArtResponse processArtChat(ChatRequest request, String userId, String chatId) {
         String userArtRequest = request.getMessage();
@@ -100,7 +103,7 @@ public class ArtChatService {
 
     private String fetchImageUrl(String query) {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
-        String url = "https://serpapi.com/search.json?q=" + encodedQuery + "&tbm=isch&api_key=" + SERPAPI_API_KEY;
+        String url = "https://serpapi.com/search.json?q=" + encodedQuery + "&tbm=isch&api_key=" + artChatProperties.getSERPAPI_API_KEY();
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
