@@ -45,15 +45,15 @@ public class ArtChatService {
             +
             "Ejemplo de respuesta: " +
             "- Pregunta: \"¿Quien pintó la Mona Lisa?\" " +
-            "- Respuesta: `Answer={La Mona Lisa fue pintada por Leonardo da Vinci, un artista renacentista italiano, entre los años 1503 y 1506. Es una de las obras de arte más famosas y reconocibles en el mundo, conocida por la enigmática expresión de la mujer retratada y por su compleja técnica de sombreado llamada sfumato. La pintura se encuentra actualmente en el Museo del Louvre en París, Francia.}`\n";
+            "- Respuesta: `Title={Mona Lisa} Answer={La Mona Lisa fue pintada por Leonardo da Vinci, un artista renacentista italiano, entre los años 1503 y 1506. Es una de las obras de arte más famosas y reconocibles en el mundo, conocida por la enigmática expresión de la mujer retratada y por su compleja técnica de sombreado llamada sfumato. La pintura se encuentra actualmente en el Museo del Louvre en París, Francia.}`\n";
 
     private static final Pattern ANSWER_PATTERN = Pattern.compile("Answer=\\{(.*?)\\}", Pattern.DOTALL);
+    private static final Pattern TITLE_PATTERN = Pattern.compile("Title=\\{(.*?)\\}", Pattern.DOTALL);
     private final ArtChatProperties artChatProperties;
 
     private final Map<String, List<Message>> conversationHistory = new HashMap<>();
     @Autowired
     private final ChatClient chatClient;
-
 
     public ArtResponse processArtChat(ChatRequest request, String userId, String chatId) {
         String userArtRequest = request.getMessage();
@@ -71,6 +71,7 @@ public class ArtChatService {
         Prompt prompt = new Prompt(conversation);
 
         String response;
+        String title;
         String answer;
         try {
             response = chatClient.call(prompt).getResult().getOutput().getContent();
@@ -79,17 +80,31 @@ public class ArtChatService {
             throw new RuntimeException("Failed to call chat client", e);
         }
 
+        // Extract title and answer from the response
+        title = extractTitle(response);
         answer = extractAnswer(response);
 
-        String imageUrl = fetchImageUrl(userArtRequest);
+        // Fetch image URLs based on the user request
+        List<String> imageUrls = fetchImageUrls(userArtRequest);
 
+        // Create a system response message with the response content
         var systemResponse = new SystemMessage(response);
         conversation.add(systemResponse);
 
         // Store the conversation history using the userChatKey
         conversationHistory.put(userChatKey, conversation);
 
-        return new ArtResponse(answer, imageUrl);
+        // Return the response object with title, answer, and image URLs
+        return new ArtResponse(title, answer, imageUrls);
+    }
+
+    private String extractTitle(String response) {
+        String title = "";
+        Matcher matcher = TITLE_PATTERN.matcher(response);
+        if (matcher.find()) {
+            title = matcher.group(1);
+        }
+        return title;
     }
 
     private String extractAnswer(String response) {
@@ -101,7 +116,7 @@ public class ArtChatService {
         return answer;
     }
 
-    private String fetchImageUrl(String query) {
+    private List<String> fetchImageUrls(String query) {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
         String url = "https://serpapi.com/search.json?q=" + encodedQuery + "&tbm=isch&api_key=" + artChatProperties.getSERPAPI_API_KEY();
         HttpClient client = HttpClient.newHttpClient();
@@ -109,20 +124,23 @@ public class ArtChatService {
                 .uri(URI.create(url))
                 .build();
 
+        List<String> imageUrls = new ArrayList<>();
         try {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String responseBody = response.body();
             JSONObject json = new JSONObject(responseBody);
             JSONArray imagesResults = json.getJSONArray("images_results");
 
-            if (imagesResults.length() > 0) {
-                JSONObject image = imagesResults.getJSONObject(0);
-                return image.getString("original");
+            int limit = Math.min(imagesResults.length(), 5);
+            for (int i = 0; i < limit; i++) {
+                JSONObject image = imagesResults.getJSONObject(i);
+                imageUrls.add(image.getString("original"));
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
 
-        return "";
+        return imageUrls;
     }
+
 }
