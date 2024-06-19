@@ -18,14 +18,11 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import dev.EduVisor.EduVisorAI.models.ChatRequest;
 import dev.EduVisor.EduVisorAI.models.art.ArtResponse;
-import io.github.cdimascio.dotenv.Dotenv;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -118,7 +115,8 @@ public class ArtChatService {
 
     private List<String> fetchImageUrls(String query) {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
-        String url = "https://serpapi.com/search.json?q=" + encodedQuery + "&tbm=isch&api_key=" + artChatProperties.getSERPAPI_API_KEY();
+        String url = "https://serpapi.com/search.json?q=" + encodedQuery + "&tbm=isch&api_key="
+                + artChatProperties.getSERPAPI_API_KEY();
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
